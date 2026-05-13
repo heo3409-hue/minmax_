@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIN / MAX 납품 계산기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F3EF;--sf:#fff;--s2:#EDECEA;--bd:#DDD9D0;
+  --tx:#18171A;--t2:#68655F;--t3:#A09C95;
+  --blue:#1549A0;--bl:#E8F0FC;
+  --red:#8B2222;--rl:#FCEAEA;
+  --teal:#0A6B6B;--tl:#E0F3F3;
+  --pur:#4A3080;--pl:#EEEAFC;
+  --grn:#1F5C1A;--gl:#EAF3E8;
+  --amb:#7A4A08;--al:#FEF3DC;
+  --r:10px;--rs:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:14px}
+.app{max-width:1200px;margin:0 auto;padding:2rem 1.5rem 5rem}
+
+/* header */
+.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1.25rem;border-bottom:1px solid var(--bd)}
+.hdr h1{font-size:20px;font-weight:700;letter-spacing:-.4px}
+.hdr p{font-size:12px;color:var(--t2);margin-top:3px}
+.ver{font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--bd);color:var(--t3);background:var(--sf)}
+
+/* config */
+.cfg{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:.75rem 1rem;margin-bottom:1.5rem}
+.lbl{font-size:12px;color:var(--t2);font-weight:500;white-space:nowrap}
+.vsep{width:1px;height:18px;background:var(--bd);margin:0 2px}
+.ci{border:1px solid var(--bd);border-radius:var(--rs);padding:5px 9px;font-size:13px;font-family:'Noto Sans KR',sans-serif;background:var(--s2);color:var(--tx);width:72px}
+.ci:focus{outline:none;border-color:var(--tx);background:var(--sf)}
+.ci.fx{width:90px;font-family:'JetBrains Mono',monospace;color:var(--teal);font-weight:600}
+.fx-pill{font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;background:var(--tl);color:var(--teal);padding:3px 9px;border-radius:4px}
+
+/* logic legend */
+.logic-bar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1.5rem}
+.logic-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rs);padding:.625rem 1rem;font-size:12px;line-height:1.7}
+.logic-card .lc-title{font-weight:600;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--t2);margin-bottom:4px}
+.lc-mn{color:var(--blue)}.lc-mx{color:var(--red)}
+.formula-chip{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--s2);border-radius:3px;padding:1px 5px;color:var(--tx)}
+
+/* tabs */
+.tabs-wrap{display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.tab-btn{padding:6px 16px;border-radius:20px;border:1px solid var(--bd);background:var(--sf);font-size:13px;font-weight:500;cursor:pointer;color:var(--t2);transition:all .15s;font-family:inherit}
+.tab-btn:hover{background:var(--s2)}
+.tab-btn.active{background:var(--tx);color:#fff;border-color:var(--tx)}
+.add-site-btn{padding:5px 12px;border-radius:20px;border:1px dashed var(--bd);background:transparent;font-size:12px;color:var(--t3);cursor:pointer;font-family:inherit;transition:all .15s}
+.add-site-btn:hover{border-color:var(--t2);color:var(--t2)}
+
+/* panel */
+.panel{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:1rem;overflow:hidden}
+.panel-hdr{display:flex;align-items:center;justify-content:space-between;padding:.7rem 1.1rem;border-bottom:1px solid var(--bd);background:var(--s2)}
+.panel-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.panel-acts{display:flex;gap:6px}
+.btn-sm{font-size:11px;padding:4px 10px;border-radius:var(--rs);border:1px solid var(--bd);background:var(--sf);color:var(--t2);cursor:pointer;font-family:inherit;transition:all .15s}
+.btn-sm:hover{background:var(--s2);color:var(--tx)}
+.btn-del{border-color:#F0997B;color:var(--red)}
+.btn-del:hover{background:var(--rl)}
+
+/* input table */
+.tscroll{overflow-x:auto}
+table.inp{width:100%;border-collapse:collapse;min-width:860px}
+table.inp thead tr.h1{background:var(--s2)}
+table.inp thead tr.h2{background:var(--sf)}
+table.inp th{padding:7px 8px;font-size:11px;font-weight:600;color:var(--t2);letter-spacing:.04em;border-bottom:1px solid var(--bd);text-align:center;white-space:nowrap}
+table.inp th:first-child{text-align:left}
+table.inp th.grp{text-align:center}
+table.inp th.bl{border-left:1px solid var(--bd)}
+table.inp th.bld{border-left:1px dashed var(--bd)}
+table.inp td{padding:4px 5px;border-bottom:1px solid var(--bd)}
+table.inp tr:last-child td{border-bottom:none}
+table.inp input{width:100%;border:1px solid transparent;border-radius:var(--rs);padding:6px 6px;font-size:12px;font-family:'JetBrains Mono',monospace;background:transparent;color:var(--tx);transition:all .12s;text-align:right}
+table.inp input.txt{text-align:left;font-family:'Noto Sans KR',sans-serif;font-size:13px}
+table.inp input:hover{border-color:var(--bd);background:var(--s2)}
+table.inp input:focus{outline:none;border-color:var(--tx);background:var(--sf)}
+table.inp input.usd{color:var(--blue)}.table.inp input.usd:focus{background:var(--bl)}
+table.inp input.c1,.table.inp input.c2{color:var(--amb)}
+table.inp input.c1:focus,table.inp input.c2:focus{background:var(--al)}
+table.inp input.n1{color:var(--grn)}.table.inp input.n1:focus{background:var(--gl)}
+table.inp input.n2{color:#2E6E9E}.table.inp input.n2:focus{background:var(--bl)}
+table.inp input.nn1{color:var(--pur)}.table.inp input.nn1:focus{background:var(--pl)}
+table.inp td.krw-c{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--teal);text-align:right;padding-right:8px;background:var(--tl)}
+.del-row{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:4px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:15px;margin:auto;transition:all .12s}
+.del-row:hover{background:var(--rl);color:var(--red)}
+.ctag{display:inline-block;font-size:10px;font-weight:600;padding:1px 5px;border-radius:3px}
+.ctag.u{background:var(--bl);color:var(--blue)}
+.ctag.k{background:var(--tl);color:var(--teal)}
+.ctag.c{background:var(--al);color:var(--amb)}
+.ctag.n{background:var(--gl);color:var(--grn)}
+.ctag.n2c{background:#D6EAF8;color:#2E6E9E}
+.ctag.nn{background:var(--pl);color:var(--pur)}
+
+/* divider */
+.divider{border:none;border-top:1px solid var(--bd);margin:1.75rem 0}
+
+/* month tabs */
+.mtabs{display:flex;gap:6px}
+.mtab{padding:5px 16px;border-radius:20px;border:1px solid var(--bd);background:var(--sf);font-size:12px;font-weight:500;cursor:pointer;color:var(--t2);font-family:inherit;transition:all .12s}
+.mtab.active{background:var(--tx);color:#fff;border-color:var(--tx)}
+
+/* site block */
+.site-block{margin-bottom:2.5rem}
+.site-block-hdr{display:flex;align-items:center;gap:8px;margin-bottom:.875rem}
+.site-block-hdr .sname{font-size:15px;font-weight:700}
+.site-block-hdr .srange{font-size:12px;color:var(--t2);background:var(--s2);padding:2px 10px;border-radius:12px;font-family:'JetBrains Mono',monospace}
+
+/* summary cards */
+.cards6{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-bottom:.875rem}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:.75rem .875rem}
+.card .cl{font-size:11px;font-weight:500;color:var(--t2);margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.card .cv{font-size:13px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.card.mn .cv{color:var(--blue)}.card.mx .cv{color:var(--red)}
+.card.mnk .cv{color:var(--teal)}.card.mxk .cv{color:var(--pur)}
+.dot6{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dot6.mn{background:var(--blue)}.dot6.mx{background:var(--red)}
+.dot6.mnk{background:var(--teal)}.dot6.mxk{background:var(--pur)}
+
+/* result table */
+table.res{width:100%;border-collapse:collapse;min-width:920px}
+table.res thead th{padding:7px 9px;font-size:11px;font-weight:600;color:var(--t2);border-bottom:1px solid var(--bd);white-space:nowrap;background:var(--s2);text-align:right}
+table.res thead th:first-child{text-align:left}
+table.res thead th.bl{border-left:1px solid var(--bd)}
+table.res thead th.bld{border-left:1px dashed var(--bd)}
+table.res thead th.grp{text-align:center;font-size:12px}
+table.res thead th.mn{color:var(--blue)}.res thead th.mx{color:var(--red)}
+table.res td{padding:0;border-bottom:1px solid var(--bd)}
+table.res td.bl{border-left:1px solid var(--bd)}
+table.res td.bld{border-left:1px dashed var(--bd)}
+table.res tr:last-child td{border-bottom:none}
+table.res tr.tot .inner{font-weight:600;background:var(--s2)}
+.inner{display:flex;flex-direction:column;padding:7px 9px;gap:2px}
+.iv{font-size:12px;font-family:'JetBrains Mono',monospace;font-weight:500;line-height:1.3}
+.ib{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--t3);line-height:1.4}
+.mn-c{color:var(--blue)}.mx-c{color:var(--red)}
+.mnk-c{color:var(--teal)}.mxk-c{color:var(--pur)}
+
+/* editable price in result */
+.price-edit{width:100%;border:1px solid transparent;border-radius:var(--rs);padding:4px 5px;font-size:12px;font-family:'JetBrains Mono',monospace;background:transparent;color:var(--blue);text-align:right;transition:all .12s}
+.price-edit:hover{border-color:var(--bd);background:var(--bl)}
+.price-edit:focus{outline:none;border-color:var(--blue);background:var(--bl)}
+
+/* grand */
+.grand{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:1.25rem;margin-top:.25rem}
+.grand-title{font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.875rem}
+.grand-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.gc{background:var(--s2);border-radius:var(--rs);padding:.875rem 1rem}
+.gc .gl{font-size:11px;color:var(--t2);margin-bottom:4px}
+.gc .gv{font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.gc .gs{font-size:11px;margin-top:3px;font-family:'JetBrains Mono',monospace}
+.gc.mn .gv{color:var(--blue)}.gc.mn .gs{color:var(--teal)}
+.gc.mx .gv{color:var(--red)}.gc.mx .gs{color:var(--pur)}
+.gc.mnk .gv{color:var(--teal)}.gc.mxk .gv{color:var(--pur)}
+
+/* note */
+.note-box{margin-top:1.5rem;padding:.875rem 1rem;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);display:flex;flex-wrap:wrap;gap:.5rem 1.5rem}
+.ni{font-size:12px;color:var(--t2);display:flex;align-items:center;gap:6px}
+.ntag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px}
+.ntag.mn{background:var(--bl);color:var(--blue)}
+.ntag.mx{background:var(--rl);color:var(--red)}
+.ntag.fx{background:var(--tl);color:var(--teal)}
+.ntag.ed{background:var(--al);color:var(--amb)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="hdr">
+  <div>
+    <h1>MIN / MAX 납품 계산기</h1>
+    <p>월 2회 발주 시스템 | 사이트별 관리 | USD 단가 → KRW 자동 환산</p>
+  </div>
+  <span class="ver">v5.0</span>
+</div>
+
+<!-- config -->
+<div class="cfg">
+  <span class="lbl">월 설정</span><div class="vsep"></div>
+  <span class="lbl">당월</span><input class="ci" id="mCur" value="5월" oninput="refresh()">
+  <span class="lbl">익월</span><input class="ci" id="mNxt" value="6월" oninput="refresh()">
+  <span class="lbl">익익월</span><input class="ci" id="mNxt2" value="7월" oninput="refresh()">
+  <div class="vsep"></div>
+  <span class="lbl">환율 ₩/$</span>
+  <input class="ci fx" id="fxRate" type="number" value="1390" oninput="refresh()">
+  <span class="fx-pill" id="fxPill">× 1,390</span>
+</div>
+
+<!-- logic legend -->
+<div class="logic-bar">
+  <div class="logic-card">
+    <div class="lc-title lc-mn">MIN 로직</div>
+    <div><b>당월 MIN</b> = 당월 <span class="formula-chip">1차 + 2차</span></div>
+    <div><b>익월 MIN</b> = 익월 <span class="formula-chip">1차 + 2차</span> − 당겨간 수량<span style="color:var(--t3);font-size:11px"> (익월 1차)</span></div>
+  </div>
+  <div class="logic-card">
+    <div class="lc-title lc-mx">MAX 로직</div>
+    <div><b>당월 MAX</b> = 당월 MIN + <span class="formula-chip">익월 1차</span> 당겨오기</div>
+    <div><b>익월 MAX</b> = 익월 <span class="formula-chip">1차 + 2차</span> + <span class="formula-chip">익익월 1차</span> 당겨오기</div>
+  </div>
+</div>
+
+<!-- tabs -->
+<div class="tabs-wrap" id="tabs-wrap"></div>
+<div id="input-panels"></div>
+
+<hr class="divider">
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+  <div style="font-size:16px;font-weight:700;letter-spacing:-.3px" id="res-title">결과</div>
+  <div class="mtabs">
+    <button class="mtab active" id="mtab-cur" onclick="setMonth('cur')"></button>
+    <button class="mtab" id="mtab-nxt" onclick="setMonth('nxt')"></button>
+  </div>
+</div>
+
+<div id="results"></div>
+<div class="grand" id="grand"></div>
+
+<div class="note-box">
+  <div class="ni"><span class="ntag mn">MIN</span> 당월 = 1차+2차 | 익월 = (1차+2차) − 익월1차(당겨간)</div>
+  <div class="ni"><span class="ntag mx">MAX</span> 당월 = MIN+익월1차 | 익월 = (1차+2차)+익익월1차</div>
+  <div class="ni"><span class="ntag fx">KRW</span> = USD 단가 × 환율 × 수량</div>
+  <div class="ni"><span class="ntag ed">단가</span> 결과 표에서 직접 클릭하여 수정 가능</div>
+</div>
+
+</div>
+<script>
+const COLORS=['#1549A0','#0A6B6B','#7A4A08','#4A3080','#1F5C1A','#8B2222'];
+
+/*
+  발주 구조 (월 2회):
+  r.c1  = 당월 1차
+  r.c2  = 당월 2차
+  r.n1  = 익월 1차  ← MAX 당월에 당겨올 수량 / MIN 익월에서 빠질 수량
+  r.n2  = 익월 2차
+  r.nn1 = 익익월 1차 ← MAX 익월에 당겨올 수량
+*/
+let sites=[
+  {id:'MSC', color:COLORS[0], rows:[
+    {prod:'SM100', usd:5.47, c1:4136,  c2:3102, n1:25850, n2:13442, nn1:12408},
+    {prod:'SM110', usd:4.27, c1:10340, c2:6204, n1:0,     n2:1034,  nn1:2068},
+  ]},
+  {id:'NASN', color:COLORS[1], rows:[
+    {prod:'SNA120', usd:3.47, c1:128216, c2:0, n1:132171, n2:0, nn1:0},
+  ]},
+];
+let activeTab='ALL', activeMonth='cur';
+
+const fx   = ()=>parseFloat(document.getElementById('fxRate').value)||1390;
+const mC   = ()=>document.getElementById('mCur').value ||'당월';
+const mN   = ()=>document.getElementById('mNxt').value ||'익월';
+const mN2  = ()=>document.getElementById('mNxt2').value||'익익월';
+const fQ   = n=>Math.round(n).toLocaleString('ko-KR');
+const fU   = n=>'$'+Math.round(n).toLocaleString('en-US');
+const fUp  = n=>'$'+parseFloat(n).toFixed(2);
+const fK   = n=>'₩'+Math.round(n).toLocaleString('ko-KR');
+
+function calcRow(r){
+  const rate=fx(), kp=r.usd*rate;
+  // 당월
+  const mnQ = r.c1 + r.c2;                  // MIN 당월
+  const mxQ = mnQ + r.n1;                   // MAX 당월 (익월1차 당겨오기)
+  // 익월
+  const nxtBase = r.n1 + r.n2;              // 익월 기본 (1차+2차)
+  const mnQn = nxtBase - r.n1;              // MIN 익월 = 기본 - 당겨간(익월1차)
+  const mxQn = nxtBase + r.nn1;             // MAX 익월 = 기본 + 익익월1차
+  return{...r, kp,
+    mnQ, mxQ, mnU:mnQ*r.usd, mxU:mxQ*r.usd, mnK:mnQ*kp, mxK:mxQ*kp,
+    nxtBase, mnQn, mxQn, mnUn:mnQn*r.usd, mxUn:mxQn*r.usd, mnKn:mnQn*kp, mxKn:mxQn*kp
+  };
+}
+
+function calcSite(site){
+  const rows=site.rows.map(calcRow);
+  const sum=(k)=>rows.reduce((a,r)=>a+r[k],0);
+  return{rows,
+    mnQ:sum('mnQ'), mxQ:sum('mxQ'), mnU:sum('mnU'), mxU:sum('mxU'), mnK:sum('mnK'), mxK:sum('mxK'),
+    mnQn:sum('mnQn'),mxQn:sum('mxQn'),mnUn:sum('mnUn'),mxUn:sum('mxUn'),mnKn:sum('mnKn'),mxKn:sum('mxKn'),
+  };
+}
+
+/* ── tabs ── */
+function renderTabs(){
+  const w=document.getElementById('tabs-wrap'); w.innerHTML='';
+  const all=document.createElement('button');
+  all.className='tab-btn'+(activeTab==='ALL'?' active':'');
+  all.style.cssText=activeTab==='ALL'?'background:var(--tx);color:#fff;border-color:var(--tx)':'background:var(--bl);color:var(--blue);border-color:var(--blue)';
+  all.textContent='전체'; all.onclick=()=>{activeTab='ALL';renderTabs();renderPanels();renderResults()};
+  w.appendChild(all);
+  sites.forEach(s=>{
+    const b=document.createElement('button');
+    b.className='tab-btn'+(activeTab===s.id?' active':'');
+    b.innerHTML=`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.color};margin-right:5px;vertical-align:middle"></span>${s.id}`;
+    b.onclick=()=>{activeTab=s.id;renderTabs();renderPanels();renderResults()};
+    w.appendChild(b);
+  });
+  const add=document.createElement('button');
+  add.className='add-site-btn'; add.textContent='+ 사이트 추가'; add.onclick=addSite;
+  w.appendChild(add);
+}
+
+/* ── input panels ── */
+function renderPanels(){
+  const c=document.getElementById('input-panels'); c.innerHTML='';
+  const show=activeTab==='ALL'?sites:sites.filter(s=>s.id===activeTab);
+  show.forEach(site=>{
+    const si=sites.indexOf(site);
+    const el=document.createElement('div'); el.className='panel';
+    el.innerHTML=`
+      <div class="panel-hdr">
+        <div class="panel-title">
+          <span class="sdot" style="background:${site.color}"></span>
+          <span contenteditable="true" style="outline:none;min-width:40px;border-bottom:1px dashed var(--bd)"
+            onblur="sites[${si}].id=this.textContent.trim();renderTabs();renderResults()">${site.id}</span>
+        </div>
+        <div class="panel-acts">
+          <button class="btn-sm" onclick="addRow(${si})">+ 제품 추가</button>
+          ${sites.length>1?`<button class="btn-sm btn-del" onclick="delSite(${si})">사이트 삭제</button>`:''}
+        </div>
+      </div>
+      <div class="tscroll">
+        <table class="inp">
+          <thead>
+            <tr class="h1">
+              <th rowspan="2" style="text-align:left;min-width:90px">제품</th>
+              <th rowspan="2"><span class="ctag u">단가 $</span></th>
+              <th rowspan="2"><span class="ctag k">단가 ₩</span><br><span style="font-size:10px;color:var(--t3);font-weight:400">자동환산</span></th>
+              <th colspan="2" class="grp bl" style="background:var(--al);color:var(--amb)">당월 발주</th>
+              <th colspan="2" class="grp bl" style="background:var(--gl);color:var(--grn)">익월 발주</th>
+              <th colspan="1" class="grp bl" style="background:var(--pl);color:var(--pur)">익익월</th>
+              <th rowspan="2" style="width:28px"></th>
+            </tr>
+            <tr class="h2">
+              <th class="bl bld" style="color:var(--amb)"><span class="ctag c">1차</span></th>
+              <th class="bld" style="color:var(--amb)"><span class="ctag c">2차</span></th>
+              <th class="bl bld" style="color:var(--grn)"><span class="ctag n">1차</span> <span style="font-size:9px;color:var(--t3)">MAX당겨오기</span></th>
+              <th class="bld" style="color:var(--grn)"><span class="ctag n2c">2차</span></th>
+              <th class="bl bld" style="color:var(--pur)"><span class="ctag nn">1차</span> <span style="font-size:9px;color:var(--t3)">MAX당겨오기</span></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-${si}"></tbody>
+        </table>
+      </div>`;
+    c.appendChild(el);
+    renderRows(si);
+  });
+}
+
+function renderRows(si){
+  const site=sites[si];
+  const tbody=document.getElementById('tbody-'+si);
+  if(!tbody)return;
+  tbody.innerHTML='';
+  const rate=fx();
+  site.rows.forEach((r,ri)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><input class="txt" value="${r.prod}" oninput="sites[${si}].rows[${ri}].prod=this.value;renderResults()"></td>
+      <td><input class="usd" type="number" step="0.01" value="${r.usd}" oninput="sites[${si}].rows[${ri}].usd=+this.value;updateKRW(${si},${ri});renderResults()"></td>
+      <td class="krw-c" id="kc-${si}-${ri}">${fK(r.usd*rate)}</td>
+      <td style="border-left:1px solid var(--bd)"><input class="c1" type="number" value="${r.c1}" oninput="sites[${si}].rows[${ri}].c1=+this.value;renderResults()"></td>
+      <td><input class="c1" type="number" value="${r.c2}" oninput="sites[${si}].rows[${ri}].c2=+this.value;renderResults()"></td>
+      <td style="border-left:1px solid var(--bd)"><input class="n1" type="number" value="${r.n1}" oninput="sites[${si}].rows[${ri}].n1=+this.value;renderResults()"></td>
+      <td><input class="n1" type="number" value="${r.n2}" oninput="sites[${si}].rows[${ri}].n2=+this.value;renderResults()"></td>
+      <td style="border-left:1px solid var(--bd)"><input class="nn1" type="number" value="${r.nn1}" oninput="sites[${si}].rows[${ri}].nn1=+this.value;renderResults()"></td>
+      <td><button class="del-row" onclick="delRow(${si},${ri})">×</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateKRW(si,ri){
+  const el=document.getElementById(`kc-${si}-${ri}`);
+  if(el) el.textContent=fK(sites[si].rows[ri].usd*fx());
+}
+function addRow(si){sites[si].rows.push({prod:'',usd:0,c1:0,c2:0,n1:0,n2:0,nn1:0});renderPanels();renderResults()}
+function delRow(si,ri){if(sites[si].rows.length<=1)return;sites[si].rows.splice(ri,1);renderPanels();renderResults()}
+function addSite(){
+  const i=sites.length;
+  sites.push({id:'SITE'+(i+1),color:COLORS[i%COLORS.length],rows:[{prod:'',usd:0,c1:0,c2:0,n1:0,n2:0,nn1:0}]});
+  activeTab='SITE'+(i+1);renderTabs();renderPanels();renderResults();
+}
+function delSite(si){if(sites.length<=1)return;sites.splice(si,1);activeTab='ALL';renderTabs();renderPanels();renderResults()}
+
+/* ── month tab ── */
+function setMonth(m){activeMonth=m;renderResults()}
+
+/* ── results ── */
+function renderResults(){
+  document.getElementById('fxPill').textContent='× '+fx().toLocaleString('ko-KR');
+  const mc=mC(),mn=mN(),mn2=mN2(),isCur=activeMonth==='cur';
+  document.getElementById('mtab-cur').textContent=mc;
+  document.getElementById('mtab-nxt').textContent=mn;
+  document.getElementById('mtab-cur').className='mtab'+(isCur?' active':'');
+  document.getElementById('mtab-nxt').className='mtab'+(!isCur?' active':'');
+  document.getElementById('res-title').textContent=(isCur?mc:mn)+' MIN / MAX 결과';
+
+  const show=activeTab==='ALL'?sites:sites.filter(s=>s.id===activeTab);
+  const container=document.getElementById('results'); container.innerHTML='';
+  let gMnQ=0,gMxQ=0,gMnU=0,gMxU=0,gMnK=0,gMxK=0;
+
+  show.forEach(site=>{
+    const si=sites.indexOf(site);
+    const calc=calcSite(site);
+    const [mnQ,mxQ,mnU,mxU,mnK,mxK]=isCur
+      ?[calc.mnQ,calc.mxQ,calc.mnU,calc.mxU,calc.mnK,calc.mxK]
+      :[calc.mnQn,calc.mxQn,calc.mnUn,calc.mxUn,calc.mnKn,calc.mxKn];
+    gMnQ+=mnQ;gMxQ+=mxQ;gMnU+=mnU;gMxU+=mxU;gMnK+=mnK;gMxK+=mxK;
+
+    const block=document.createElement('div'); block.className='site-block';
+
+    const bHdr=`<div class="site-block-hdr">
+      <span class="sdot" style="background:${site.color}"></span>
+      <span class="sname">${site.id}</span>
+      <span class="srange">${fQ(mnQ)} ~ ${fQ(mxQ)} EA</span>
+    </div>`;
+
+    const cards=`<div class="cards6">
+      <div class="card mn"><div class="cl"><span class="dot6 mn"></span>MIN 수량</div><div class="cv">${fQ(mnQ)} EA</div></div>
+      <div class="card mn"><div class="cl"><span class="dot6 mn"></span>MIN USD</div><div class="cv">${fU(mnU)}</div></div>
+      <div class="card mnk"><div class="cl"><span class="dot6 mnk"></span>MIN KRW</div><div class="cv" style="font-size:11px">${fK(mnK)}</div></div>
+      <div class="card mx"><div class="cl"><span class="dot6 mx"></span>MAX 수량</div><div class="cv">${fQ(mxQ)} EA</div></div>
+      <div class="card mx"><div class="cl"><span class="dot6 mx"></span>MAX USD</div><div class="cv">${fU(mxU)}</div></div>
+      <div class="card mxk"><div class="cl"><span class="dot6 mxk"></span>MAX KRW</div><div class="cv" style="font-size:11px">${fK(mxK)}</div></div>
+    </div>`;
+
+    // table
+    let tbl='';
+    if(isCur){
+      tbl=`<div class="tscroll"><table class="res">
+      <thead><tr>
+        <th style="text-align:left;min-width:80px">제품</th>
+        <th class="bl" style="text-align:center;min-width:120px">단가</th>
+        <th class="bl grp mn" colspan="3">MIN &nbsp;—&nbsp; ${mc} 1차 + 2차</th>
+        <th class="bl grp mx" colspan="3">MAX &nbsp;—&nbsp; MIN + ${mn} 1차 당겨오기</th>
+      </tr><tr>
+        <th></th><th class="bl"></th>
+        <th class="bl mn" style="min-width:150px">수량 구성</th>
+        <th class="bld mn">USD</th><th class="bld mnk">KRW</th>
+        <th class="bl mx" style="min-width:180px">수량 구성</th>
+        <th class="bld mx">USD</th><th class="bld mxk">KRW</th>
+      </tr></thead><tbody>`;
+
+      calc.rows.forEach((r,ri)=>{
+        const mnFml = `${fQ(r.c1)} + ${fQ(r.c2)}`;
+        const mxFml = r.n1>0
+          ? `${fQ(r.mnQ)} + ${fQ(r.n1)}`
+          : `${fQ(r.mnQ)}  (${mn} 1차 없음)`;
+        tbl+=`<tr>
+          <td><div class="inner"><span class="iv" style="font-weight:500">${r.prod||'—'}</span></div></td>
+          <td class="bl">
+            <div class="inner" style="align-items:flex-end">
+              <input class="price-edit" type="number" step="0.01" value="${r.usd}"
+                title="단가 수정 (Enter 후 반영)"
+                oninput="sites[${si}].rows[${ri}].usd=+this.value;renderRows(${si});renderResults()">
+              <span class="ib" style="color:var(--teal)">${fK(r.kp)}</span>
+            </div>
+          </td>
+          <td class="bl">
+            <div class="inner">
+              <span class="iv mn-c">${fQ(r.mnQ)} EA</span>
+              <span class="ib" style="color:var(--amb)">= ${fQ(r.c1)} (1차) + ${fQ(r.c2)} (2차)</span>
+            </div>
+          </td>
+          <td class="bld"><div class="inner"><span class="iv mn-c">${fU(r.mnU)}</span></div></td>
+          <td class="bld"><div class="inner"><span class="iv mnk-c">${fK(r.mnK)}</span></div></td>
+          <td class="bl">
+            <div class="inner">
+              <span class="iv mx-c">${fQ(r.mxQ)} EA</span>
+              ${r.n1>0
+                ?`<span class="ib" style="color:var(--grn)">= MIN ${fQ(r.mnQ)} + ${mn}1차 ${fQ(r.n1)}</span>`
+                :`<span class="ib" style="color:var(--t3)">= MIN ${fQ(r.mnQ)} (당겨올 수량 없음)</span>`}
+            </div>
+          </td>
+          <td class="bld"><div class="inner"><span class="iv mx-c">${fU(r.mxU)}</span></div></td>
+          <td class="bld"><div class="inner"><span class="iv mxk-c">${fK(r.mxK)}</span></div></td>
+        </tr>`;
+      });
+      tbl+=`<tr class="tot">
+        <td><div class="inner"><span class="iv">합계</span></div></td>
+        <td class="bl"><div class="inner"></div></td>
+        <td class="bl"><div class="inner"><span class="iv mn-c">${fQ(calc.mnQ)} EA</span></div></td>
+        <td class="bld"><div class="inner"><span class="iv mn-c">${fU(calc.mnU)}</span></div></td>
+        <td class="bld"><div class="inner"><span class="iv mnk-c">${fK(calc.mnK)}</span></div></td>
+        <td class="bl"><div class="inner"><span class="iv mx-c">${fQ(calc.mxQ)} EA</span></div></td>
+        <td class="bld"><div class="inner"><span class="iv mx-c">${fU(calc.mxU)}</span></div></td>
+        <td class="bld"><div class="inner"><span class="iv mxk-c">${fK(calc.mxK)}</span></div></td>
+      </tr></tbody></table></div>`;
+
+    } else {
+      // 익월
+      tbl=`<div class="tscroll"><table class="res">
+      <thead><tr>
+        <th style="text-align:left;min-width:80px">제품</th>
+        <th class="bl" style="text-align:center;min-width:120px">단가</th>
+        <th class="bl grp mn" colspan="3">MIN &nbsp;—&nbsp; ${mn} (1차+2차) − ${mc} 당겨간(1차)</th>
+        <th class="bl grp mx" colspan="3">MAX &nbsp;—&nbsp; ${mn} (1차+2차) + ${mn2} 1차 당겨오기</th>
+      </tr><tr>
+        <th></th><th class="bl"></th>
+        <th class="bl mn" style="min-width:200px">수량 구성</th>
+        <th class="bld mn">USD</th><th class="bld mnk">KRW</th>
+        <th class="bl mx" style="min-width:200px">수량 구성</th>
+        <th class="bld mx">USD</th><th class="bld mxk">KRW</th>
+      </tr></thead><tbody>`;
+
+      calc.rows.forEach((r,ri)=>{
+        tbl+=`<tr>
+          <td><div class="inner"><span class="iv" style="font-weight:500">${r.prod||'—'}</span></div></td>
+          <td class="bl">
+            <div class="inner" style="align-items:flex-end">
+              <input class="price-edit" type="number" step="0.01" value="${r.usd}"
+                title="단가 수정"
+                oninput="sites[${si}].rows[${ri}].usd=+this.value;renderRows(${si});renderResults()">
+              <span class="ib" style="color:var(--teal)">${fK(r.kp)}</span>
+            </div>
+          </td>
+          <td class="bl">
+            <div class="inner">
+              <span class="iv mn-c">${fQ(r.mnQn)} EA</span>
+              <span class="ib" style="color:var(--grn)">${mn} 기본 = ${fQ(r.n1)} (1차) + ${fQ(r.n2)} (2차) = ${fQ(r.nxtBase)}</span>
+              <span class="ib" style="color:var(--red)">− ${fQ(r.n1)} (${mc} MAX에 당겨간 1차)</span>
+            </div>
+          </td>
+          <td class="bld"><div class="inner"><span class="iv mn-c">${fU(r.mnUn)}</span></div></td>
+          <td class="bld"><div class="inner"><span class="iv mnk-c">${fK(r.mnKn)}</span></div></td>
+          <td class="bl">
+            <div class="inner">
+              <span class="iv mx-c">${fQ(r.mxQn)} EA</span>
+              <span class="ib" style="color:var(--grn)">${mn} 기본 ${fQ(r.nxtBase)}</span>
+              ${r.nn1>0
+                ?`<span class="ib" style="color:var(--pur)">+ ${mn2} 1차 ${fQ(r.nn1)} 당겨오기</span>`
+                :`<span class="ib" style="color:var(--t3)">(${mn2} 1차 없음)</span>`}
+            </div>
+          </td>
+          <td class="bld"><div class="inner"><span class="iv mx-c">${fU(r.mxUn)}</span></div></td>
+          <td class="bld"><div class="inner"><span class="iv mxk-c">${fK(r.mxKn)}</span></div></td>
+        </tr>`;
+      });
+      tbl+=`<tr class="tot">
+        <td><div class="inner"><span class="iv">합계</span></div></td>
+        <td class="bl"><div class="inner"></div></td>
+        <td class="bl"><div class="inner"><span class="iv mn-c">${fQ(calc.mnQn)} EA</span></div></td>
+        <td class="bld"><div class="inner"><span class="iv mn-c">${fU(calc.mnUn)}</span></div></td>
+        <td class="bld"><div class="inner"><span class="iv mnk-c">${fK(calc.mnKn)}</span></div></td>
+        <td class="bl"><div class="inner"><span class="iv mx-c">${fQ(calc.mxQn)} EA</span></div></td>
+        <td class="bld"><div class="inner"><span class="iv mx-c">${fU(calc.mxUn)}</span></div></td>
+        <td class="bld"><div class="inner"><span class="iv mxk-c">${fK(calc.mxKn)}</span></div></td>
+      </tr></tbody></table></div>`;
+    }
+
+    block.innerHTML=bHdr+cards+`<div style="background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden">${tbl}</div>`;
+    container.appendChild(block);
+  });
+
+  // grand total
+  document.getElementById('grand').innerHTML=`
+    <div class="grand-title">${(isCur?mc:mn)} 전체 사이트 합산</div>
+    <div class="grand-grid">
+      <div class="gc mn">
+        <div class="gl">MIN 수량</div>
+        <div class="gv">${fQ(gMnQ)} <span style="font-size:12px;font-weight:400">EA</span></div>
+        <div class="gs" style="color:var(--blue)">${fU(gMnU)}</div>
+        <div class="gs" style="color:var(--teal)">${fK(gMnK)}</div>
+      </div>
+      <div class="gc mx">
+        <div class="gl">MAX 수량</div>
+        <div class="gv">${fQ(gMxQ)} <span style="font-size:12px;font-weight:400">EA</span></div>
+        <div class="gs" style="color:var(--red)">${fU(gMxU)}</div>
+        <div class="gs" style="color:var(--pur)">${fK(gMxK)}</div>
+      </div>
+      <div class="gc mnk">
+        <div class="gl">MIN KRW 합계</div>
+        <div class="gv" style="font-size:14px">${fK(gMnK)}</div>
+        <div class="gs" style="color:var(--t3)">환율 ×${fx().toLocaleString('ko-KR')}</div>
+      </div>
+      <div class="gc mxk">
+        <div class="gl">MAX KRW 합계</div>
+        <div class="gv" style="font-size:14px">${fK(gMxK)}</div>
+        <div class="gs" style="color:var(--t3)">환율 ×${fx().toLocaleString('ko-KR')}</div>
+      </div>
+    </div>`;
+}
+
+function refresh(){
+  sites.forEach((s,si)=>s.rows.forEach((_,ri)=>updateKRW(si,ri)));
+  renderResults();
+}
+
+renderTabs(); renderPanels(); renderResults();
+</script>
+</body>
+</html>
